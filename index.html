@@ -224,29 +224,44 @@ function renderSizes(){
 }
 const method = () => { const r = document.querySelector('input[name=method]:checked'); return direct && r ? r.value : '택배'; };
 
+const DEFAULT_CFG = {"ok":true,"products":[{"variety":"감홍","options":[{"size":"5kg","price":65000},{"size":"10kg","price":130000}]}],"shipNormal":5000,"shipJeju":10000,"shipPerBox":true,"contact":"황지연 010-3525-6199"};
+const CFG_KEY = 'apple_cfg_v1';
+
+// 품종·가격을 화면에 그리기 (고른 품종·무게는 유지)
+function applyConfig(c){
+  cfg = c;
+  const box = $('varieties');
+  if (!cfg.products.length) {
+    box.innerHTML = '<p class="note">지금은 신청받는 사과가 없어요.</p>';
+    $('sizeField').hidden = true; $('submitBtn').disabled = true; return;
+  }
+  const prev = (document.querySelector('input[name=variety]:checked') || {}).value;
+  const pick = cfg.products.some(p => p.variety === prev) ? prev : cfg.products[0].variety;
+  box.innerHTML = cfg.products.map(p =>
+    `<label class="choice"><input type="radio" name="variety" value="${esc(p.variety)}" ${p.variety === pick ? 'checked' : ''}><span><b>${esc(p.variety)}</b><em>${p.options.map(o => o.size).join(' · ')}</em></span></label>`
+  ).join('');
+  renderSizes();
+  $('contactLink').textContent = cfg.contact;
+  $('contactLink').href = 'tel:' + cfg.contact.replace(/\D/g, '');
+  $('submitBtn').disabled = false;
+  $('loadErr').hidden = true;
+  update();
+}
+$('varieties').addEventListener('change', () => { renderSizes(); update(); });
+$('sizes').addEventListener('change', update);
+
+// 저장된 값(또는 기본값)으로 즉시 그리고, 서버 최신값이 오면 조용히 갱신
 async function loadConfig(){
+  let cached = null;
+  try { cached = JSON.parse(localStorage.getItem(CFG_KEY) || 'null'); } catch (e) {}
+  applyConfig(cached && cached.products ? cached : DEFAULT_CFG);
   try {
     const j = await (await fetch(SCRIPT_URL + '?action=config')).json();
     if (!j.ok) throw new Error(j.error);
-    cfg = j;
-    const box = $('varieties');
-    if (!cfg.products.length) { box.innerHTML = '<p class="note">지금은 신청받는 사과가 없어요.</p>'; return; }
-    box.innerHTML = cfg.products.map((p, i) =>
-      `<label class="choice"><input type="radio" name="variety" value="${esc(p.variety)}" ${i === 0 ? 'checked' : ''}><span><b>${esc(p.variety)}</b><em>${p.options.map(o => o.size).join(' · ')}</em></span></label>`
-    ).join('');
-    box.addEventListener('change', () => { renderSizes(); update(); });
-    $('sizes').addEventListener('change', update);
-    renderSizes();
-    $('contactLink').textContent = cfg.contact;
-    $('contactLink').href = 'tel:' + cfg.contact.replace(/\D/g, '');
-    $('submitBtn').disabled = false;
-    update();
-  } catch (e) {
-    $('loadErr').hidden = false;
-    $('varieties').innerHTML = '';
-  }
+    if (JSON.stringify(j) !== JSON.stringify(cfg)) applyConfig(j);
+    try { localStorage.setItem(CFG_KEY, JSON.stringify(j)); } catch (e) {}
+  } catch (e) { /* 서버가 늦거나 실패해도 기본값으로 진행. 금액은 제출 시 서버가 다시 계산 */ }
 }
-
 function renderMethod(){
   $('methodField').hidden = false;
   const box = $('methodBox');
