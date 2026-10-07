@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>사과 5kg 신청하기</title>
+<title>사과 신청하기</title>
 <!-- 링크 미리보기 (카톡 등) — 배포 주소로 바꿔줘. 이미지는 반드시 https 전체 주소 -->
 <meta property="og:type" content="website">
-<meta property="og:title" content="사과 5kg 신청하기">
-<meta property="og:description" content="5kg 상자 단위로 신청받아요. 입금 확인 후 보내드려요.">
+<meta property="og:title" content="사과 신청하기">
+<meta property="og:description" content="5kg·10kg 상자 단위로 신청받아요. 입금 확인 후 보내드려요.">
 <meta property="og:url" content="https://d201416.github.io/apple/">
 <meta property="og:image" content="https://d201416.github.io/apple/og-image.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta name="description" content="5kg 상자 단위로 신청받아요. 입금 확인 후 보내드려요.">
+<meta name="description" content="5kg·10kg 상자 단위로 신청받아요. 입금 확인 후 보내드려요.">
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#B7222B">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍎</text></svg>">
@@ -76,7 +76,7 @@
   .info h2{font-size:16px;margin:0 0 12px}
   .info p{font-size:14px;line-height:1.65;margin:0 0 10px;color:var(--ink)}
   .info p:last-child{margin-bottom:0}
-  .info a{color:var(--red);font-weight:700}
+  .info a{color:var(--ink);font-weight:700;text-decoration:underline;text-underline-offset:3px}
   .done{text-align:center}
   .done h2{font-size:24px;margin:14px 0 6px}
   .done .amt{font-size:15px;color:var(--muted);margin:0}
@@ -107,7 +107,7 @@
   <div class="intro">
     <span class="tag">🍎 감홍사과</span>
     <h1>사과 신청받아요</h1>
-    <p>5kg 상자 단위로 받고, 입금 확인되면 보내드려요.</p>
+    <p>5kg·10kg 상자 단위로 받고, 입금 확인되면 보내드려요.</p>
   </div>
   <form class="card" id="orderForm" novalidate>
     <p class="err" id="loadErr" hidden style="margin:0 0 16px">주문 정보를 불러오지 못했어요. 잠시 후 새로고침해 주세요.</p>
@@ -115,6 +115,11 @@
     <div class="field">
       <span class="l">품종: 감홍</span>
       <div class="stack" id="varieties"><p class="note">불러오는 중…</p></div>
+    </div>
+
+    <div class="field" id="sizeField" hidden>
+      <span class="l">무게</span>
+      <div class="stack" id="sizes"></div>
     </div>
 
     <div class="field">
@@ -143,7 +148,7 @@
     </div>
 
     <div class="field">
-      <label class="l" for="qty">수량 <span class="hint">1상자 = 5kg</span></label>
+      <label class="l" for="qty">수량 <span class="hint">상자 단위</span></label>
       <div class="stepper">
         <button type="button" id="minus" aria-label="한 상자 빼기">−</button>
         <input type="text" id="qty" value="1" inputmode="numeric">
@@ -207,6 +212,16 @@ let cfg = null, direct = false, checking = false;
 const isJeju = zip => { const z = parseInt(zip, 10); return z >= 63000 && z <= 63644; };
 const qty = () => Math.max(1, parseInt($('qty').value, 10) || 1);
 const variety = () => { const r = document.querySelector('input[name=variety]:checked'); return r ? cfg.products.find(p => p.variety === r.value) : null; };
+const option = () => { const v = variety(); if (!v) return null; const r = document.querySelector('input[name=size]:checked'); return v.options.find(o => o.size === (r && r.value)) || v.options[0]; };
+function renderSizes(){
+  const v = variety(); if (!v) return;
+  const prev = (document.querySelector('input[name=size]:checked') || {}).value;
+  const pick = v.options.some(o => o.size === prev) ? prev : v.options[0].size;
+  $('sizes').innerHTML = v.options.map(o =>
+    `<label class="choice"><input type="radio" name="size" value="${o.size}" ${o.size === pick ? 'checked' : ''}><span><b>${o.size}</b><em>${won(o.price)}</em></span></label>`
+  ).join('');
+  $('sizeField').hidden = false;
+}
 const method = () => { const r = document.querySelector('input[name=method]:checked'); return direct && r ? r.value : '택배'; };
 
 async function loadConfig(){
@@ -217,9 +232,11 @@ async function loadConfig(){
     const box = $('varieties');
     if (!cfg.products.length) { box.innerHTML = '<p class="note">지금은 신청받는 사과가 없어요.</p>'; return; }
     box.innerHTML = cfg.products.map((p, i) =>
-      `<label class="choice"><input type="radio" name="variety" value="${esc(p.variety)}" ${i === 0 ? 'checked' : ''}><span><b>${esc(p.variety)}</b><em>5kg ${won(p.price)}</em></span></label>`
+      `<label class="choice"><input type="radio" name="variety" value="${esc(p.variety)}" ${i === 0 ? 'checked' : ''}><span><b>${esc(p.variety)}</b><em>${p.options.map(o => o.size).join(' · ')}</em></span></label>`
     ).join('');
-    box.addEventListener('change', update);
+    box.addEventListener('change', () => { renderSizes(); update(); });
+    $('sizes').addEventListener('change', update);
+    renderSizes();
     $('contactLink').textContent = cfg.contact;
     $('contactLink').href = 'tel:' + cfg.contact.replace(/\D/g, '');
     $('submitBtn').disabled = false;
@@ -257,17 +274,17 @@ async function checkDirect(){
 
 function update(){
   if (!cfg) return;
-  const v = variety(), q = qty(), m = method(), zip = $('zip').value;
+  const v = variety(), o = option(), q = qty(), m = method(), zip = $('zip').value;
   $('qty').value = q;
-  if (!v) return;
+  if (!v || !o) return;
   const jeju = isJeju(zip);
   const unit = m === '직배송' ? 0 : (jeju ? cfg.shipJeju : cfg.shipNormal);
   const ship = cfg.shipPerBox ? unit * q : unit;
-  $('sApple').textContent = `${v.variety} 5kg × ${q}상자`;
-  $('sAppleAmt').textContent = won(v.price * q);
+  $('sApple').textContent = `${v.variety} ${o.size} × ${q}상자`;
+  $('sAppleAmt').textContent = won(o.price * q);
   $('sShipLabel').textContent = m === '직배송' ? '직접 받기' : (jeju ? '택배비 (제주)' : '택배비');
   $('sShip').textContent = m === '직배송' ? '0원' : won(ship);
-  $('sTotal').textContent = won(v.price * q + ship);
+  $('sTotal').textContent = won(o.price * q + ship);
   $('submitBtn').disabled = checking;
 }
 
@@ -318,7 +335,7 @@ $('orderForm').addEventListener('submit', async e => {
   if (!$('zip').value) return err('주소 검색으로 주소를 입력해 주세요.');
 
   const data = {
-    variety: v.variety, qty: qty(), method: method(),
+    variety: v.variety, size: option().size, qty: qty(), method: method(),
     name: $('name').value.trim(), phone: $('phone').value,
     zip: $('zip').value, address: $('address').value, detail: $('detail').value.trim(),
     orderer: $('orderer').value.trim(),
