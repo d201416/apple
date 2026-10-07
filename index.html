@@ -94,6 +94,14 @@
   .addr-head button{font:inherit;font-size:14px;font-weight:700;color:var(--red);background:none;border:0;padding:6px;cursor:pointer}
   #addrWrap{flex:1;min-height:0}
   @media (min-width:600px){ .addr-layer{align-items:center} .addr-sheet{border-radius:20px} }
+  .detail{margin:18px 0 0;border-top:1px solid var(--line);text-align:left}
+  .detail div{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .detail dt{color:var(--muted);flex:none}
+  .detail dd{margin:0;text-align:right;font-weight:600;word-break:keep-all;overflow-wrap:anywhere}
+  .mini{font:inherit;font-size:12px;font-weight:700;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:6px;padding:3px 8px;margin-left:4px;cursor:pointer}
+  .check-link{display:inline-block;margin-top:12px;font-size:14px;font-weight:700;color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+  .check-title{font-size:22px;margin:0 0 6px;letter-spacing:-0.02em}
+  .back{display:block;margin-top:18px;text-align:center;font-size:14px;color:var(--muted)}
   [hidden]{display:none!important}
   @media (prefers-reduced-motion:no-preference){ .done img{animation:drop .5s ease-out} @keyframes drop{from{transform:translateY(-14px);opacity:0}to{transform:none;opacity:1}} }
 </style>
@@ -183,6 +191,25 @@
       <button type="button" id="copyBank">계좌번호 복사</button>
     </div>
     <p class="after" id="dAfter"></p>
+    <div id="dDetail"></div>
+    <a class="check-link" id="dCheck" href="#check">주문번호로 나중에 다시 확인하기</a>
+  </section>
+
+  <section class="card" id="check" hidden>
+    <h2 class="check-title">주문 확인</h2>
+    <p class="note" style="margin:0 0 18px">주문번호와 휴대폰 뒷자리 4개를 넣어주세요.</p>
+    <div class="field">
+      <label class="l" for="qNo">주문번호</label>
+      <input type="text" id="qNo" placeholder="예: 1007-001" autocomplete="off">
+    </div>
+    <div class="field">
+      <label class="l" for="qTail">휴대폰 뒷자리</label>
+      <input type="tel" id="qTail" inputmode="numeric" maxlength="4" placeholder="4자리">
+    </div>
+    <p class="err" id="qErr" role="alert" hidden></p>
+    <button type="button" class="btn btn-primary" id="qBtn">조회하기</button>
+    <div id="qResult" aria-live="polite" hidden></div>
+    <a href="#" class="back">← 신청 화면으로</a>
   </section>
 
   <section class="info" aria-labelledby="infoTitle">
@@ -190,6 +217,8 @@
     <p>택배는 로젠택배로 보내드리고, 가까운 지역은 직접 가져다드려요. 택배비는 상자당 5,000원, 제주는 10,000원이에요.</p>
     <p>상자가 파손됐거나 사과가 상해서 왔다면 버리지 말고 상자와 사과 사진을 찍어 받은 날 바로 연락 주세요. 로젠택배 사고 보상 절차로 처리해 드릴게요.</p>
     <p>문의 <a id="contactLink" href="#">010-3525-6199</a></p>
+    <p>입금 계좌 <b>국민은행 468401-04-092143</b> (예금주 황지연)<button type="button" class="mini" data-copy="46840104092143">복사</button></p>
+    <p><a class="check-link" href="#check" style="margin-top:0">주문 내역 확인하기 →</a></p>
   </section>
 </main>
 
@@ -365,7 +394,12 @@ $('orderForm').addEventListener('submit', async e => {
     $('dAfter').textContent = j.method === '직배송'
       ? '입금 확인되면 직접 가져다드릴게요. 감사합니다.'
       : '입금 확인되면 로젠택배로 보내드릴게요. 감사합니다.';
-    $('orderForm').hidden = true; $('done').hidden = false;
+    $('dDetail').innerHTML = orderRows(Object.assign({}, j, {
+      orderer: data.orderer || data.name, name: data.name, phone: data.phone,
+      address: (data.address + ' ' + data.detail).trim(),
+    }));
+    $('dCheck').href = '#check=' + encodeURIComponent(j.no);
+    doneShown = true; route();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (e2) {
     err('신청이 전송되지 않았어요. ' + (e2.message || '') + ' 다시 눌러주세요.');
@@ -373,7 +407,63 @@ $('orderForm').addEventListener('submit', async e => {
   }
 });
 
+// ===== 주문 내역 표시 / 주문 확인 화면 =====
+let doneShown = false;
+function orderRows(o){
+  const rows = [
+    ['주문번호', o.no],
+    o.status ? ['상태', o.status] : null,
+    ['상품', `${o.variety} ${o.size} × ${o.qty}상자`],
+    ['사과 금액', won(o.appleTotal)],
+    ['배송', o.method === '직배송' ? '직접 배송 (0원)' : `로젠택배${o.region === '제주' ? ' (제주)' : ''} ${won(o.ship)}`],
+    ['입금하실 금액', won(o.total)],
+    ['입금자명', o.orderer],
+    ['받는 분', `${o.name} · ${o.phone}`],
+    ['주소', o.address],
+  ].filter(Boolean);
+  return `<dl class="detail">${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>`;
+}
+function route(){
+  const h = location.hash;
+  const isCheck = h.indexOf('#check') === 0;
+  $('check').hidden = !isCheck;
+  $('orderForm').hidden = isCheck || doneShown;
+  $('done').hidden = isCheck || !doneShown;
+  const intro = document.querySelector('.intro'); if (intro) intro.hidden = isCheck;
+  if (isCheck) {
+    const m = h.match(/^#check=(.+)$/);
+    if (m) $('qNo').value = decodeURIComponent(m[1]);
+    $('qResult').hidden = true; $('qErr').hidden = true;
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+window.addEventListener('hashchange', route);
+
+$('qTail').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4); });
+$('qBtn').addEventListener('click', async () => {
+  const err = m => { $('qErr').textContent = m; $('qErr').hidden = false; };
+  $('qErr').hidden = true; $('qResult').hidden = true;
+  const no = $('qNo').value.trim(), tail = $('qTail').value;
+  if (!no) return err('주문번호를 입력해 주세요.');
+  if (tail.length !== 4) return err('휴대폰 뒷자리 4자리를 입력해 주세요.');
+  $('qBtn').disabled = true; $('qBtn').textContent = '조회 중…';
+  try {
+    const j = await (await fetch(SCRIPT_URL + '?action=lookup&no=' + encodeURIComponent(no) + '&tail=' + tail)).json();
+    if (!j.ok) throw new Error(j.error);
+    $('qResult').innerHTML = orderRows(j) + (j.status === '입금 확인 전'
+      ? '<p class="note">국민은행 468401-04-092143 (예금주 황지연)으로 입금해 주세요.</p>' : '');
+    $('qResult').hidden = false;
+  } catch (e) { err(e.message || '조회하지 못했어요. 잠시 후 다시 해주세요.'); }
+  $('qBtn').disabled = false; $('qBtn').textContent = '조회하기';
+});
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-copy]'); if (!b) return;
+  navigator.clipboard.writeText(b.dataset.copy).then(() => { b.textContent = '복사됨'; }).catch(() => { b.textContent = b.dataset.copy; });
+});
+
 loadConfig();
+route();
 </script>
 </body>
 </html>
