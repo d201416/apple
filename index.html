@@ -101,6 +101,7 @@
   .detail dd{margin:0;text-align:right;font-weight:600;word-break:keep-all;overflow-wrap:anywhere}
   .mini{font:inherit;font-size:12px;font-weight:700;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:6px;padding:3px 8px;margin-left:4px;cursor:pointer}
   .check-link{display:inline-block;margin-top:12px;font-size:14px;font-weight:700;color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+  .detail + .detail{margin-top:28px}
   .check-title{font-size:22px;margin:0 0 6px;letter-spacing:-0.02em}
   .back{display:block;margin-top:18px;text-align:center;font-size:14px;color:var(--muted)}
   .btn-secondary,.info a.btn-secondary{display:block;width:100%;margin-top:16px;padding:14px 16px;text-align:center;font-size:15px;font-weight:700;color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:12px;text-decoration:none}
@@ -204,14 +205,14 @@
 
   <section class="card" id="check" hidden>
     <h2 class="check-title">주문 확인</h2>
-    <p class="note" style="margin:0 0 18px">주문번호와 휴대폰 뒷자리 4개를 넣어주세요.</p>
+    <p class="note" style="margin:0 0 18px">주문할 때 적은 이름(받는 분 또는 입금자)과 휴대폰 뒷자리 4개를 넣어주세요.</p>
     <div class="field">
-      <label class="l" for="qNo">주문번호</label>
-      <input type="text" id="qNo" placeholder="예: 1007-001" autocomplete="off">
+      <label class="l" for="qNo">이름 <span class="hint">주문번호로도 찾을 수 있어요</span></label>
+      <input type="text" id="qNo" placeholder="받는 분 또는 입금자 이름" autocomplete="off">
     </div>
     <div class="field">
       <label class="l" for="qTail">휴대폰 뒷자리</label>
-      <input type="tel" id="qTail" inputmode="numeric" maxlength="4" placeholder="4자리">
+      <input type="tel" id="qTail" inputmode="numeric" maxlength="4" placeholder="주문 때 적은 번호 4자리">
     </div>
     <p class="err" id="qErr" role="alert" hidden></p>
     <button type="button" class="btn btn-primary" id="qBtn">조회하기</button>
@@ -451,14 +452,16 @@ $('qBtn').addEventListener('click', async () => {
   const err = m => { $('qErr').textContent = m; $('qErr').hidden = false; };
   $('qErr').hidden = true; $('qResult').hidden = true;
   const no = $('qNo').value.trim(), tail = $('qTail').value;
-  if (!no) return err('주문번호를 입력해 주세요.');
+  if (!no) return err('이름을 입력해 주세요.');
   if (tail.length !== 4) return err('휴대폰 뒷자리 4자리를 입력해 주세요.');
   $('qBtn').disabled = true; $('qBtn').textContent = '조회 중…';
   try {
     const j = await (await fetch(SCRIPT_URL + '?action=lookup&no=' + encodeURIComponent(no) + '&tail=' + tail)).json();
     if (!j.ok) throw new Error(j.error);
-    $('qResult').innerHTML = orderRows(j) + (j.status === '입금 확인 전'
-      ? '<p class="note">국민은행 468401-04-092143 (예금주 황지연)으로 입금해 주세요.</p>' : '');
+    const list = j.orders || [j];
+    $('qResult').innerHTML = (list.length > 1 ? `<p class="note" style="margin:18px 0 0">주문 ${list.length}건이 있어요. (최근 주문부터)</p>` : '')
+      + list.map(o => orderRows(o)).join('')
+      + (list.some(o => o.status === '입금 확인 전') ? '<p class="note">입금 전 주문은 국민은행 468401-04-092143 (예금주 황지연)으로 입금해 주세요.</p>' : '');
     $('qResult').hidden = false;
   } catch (e) { err(e.message || '조회하지 못했어요. 잠시 후 다시 해주세요.'); }
   $('qBtn').disabled = false; $('qBtn').textContent = '조회하기';
