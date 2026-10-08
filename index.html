@@ -15,6 +15,7 @@
 <meta name="description" content="5kg·10kg 상자 단위로 신청받아요. 입금 확인 후 보내드려요.">
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#B7222B">
+<meta name="format-detection" content="telephone=no, address=no, email=no">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍎</text></svg>">
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
@@ -102,6 +103,12 @@
   .check-link{display:inline-block;margin-top:12px;font-size:14px;font-weight:700;color:var(--ink);text-decoration:underline;text-underline-offset:3px}
   .check-title{font-size:22px;margin:0 0 6px;letter-spacing:-0.02em}
   .back{display:block;margin-top:18px;text-align:center;font-size:14px;color:var(--muted)}
+  .btn-secondary,.info a.btn-secondary{display:block;width:100%;margin-top:16px;padding:14px 16px;text-align:center;font-size:15px;font-weight:700;color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:12px;text-decoration:none}
+  .btn-secondary:active{background:var(--bg)}
+  .acct{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
+  .acct b{font-variant-numeric:tabular-nums;letter-spacing:0}
+  .acct .holder{color:var(--muted)}
+  .acct .mini{margin-left:0}
   [hidden]{display:none!important}
   @media (prefers-reduced-motion:no-preference){ .done img{animation:drop .5s ease-out} @keyframes drop{from{transform:translateY(-14px);opacity:0}to{transform:none;opacity:1}} }
 </style>
@@ -192,7 +199,7 @@
     </div>
     <p class="after" id="dAfter"></p>
     <div id="dDetail"></div>
-    <a class="check-link" id="dCheck" href="#check">주문번호로 나중에 다시 확인하기</a>
+    <a class="btn-secondary" id="dCheck" href="#check">주문 내역 다시 확인하기</a>
   </section>
 
   <section class="card" id="check" hidden>
@@ -217,8 +224,8 @@
     <p>택배는 로젠택배로 보내드리고, 가까운 지역은 직접 가져다드려요. 택배비는 상자당 5,000원, 제주는 10,000원이에요.</p>
     <p>상자가 파손됐거나 사과가 상해서 왔다면 버리지 말고 상자와 사과 사진을 찍어 받은 날 바로 연락 주세요. 로젠택배 사고 보상 절차로 처리해 드릴게요.</p>
     <p>문의 <a id="contactLink" href="#">010-3525-6199</a></p>
-    <p>입금 계좌 <b>국민은행 468401-04-092143</b> (예금주 황지연)<button type="button" class="mini" data-copy="46840104092143">복사</button></p>
-    <p><a class="check-link" href="#check" style="margin-top:0">주문 내역 확인하기 →</a></p>
+    <p class="acct"><span>입금 계좌</span><b>국민은행 468401-04-092143</b><span class="holder">예금주 황지연</span><button type="button" class="mini" data-copy="46840104092143">복사</button></p>
+    <a class="btn-secondary" href="#check">주문 내역 확인하기</a>
   </section>
 </main>
 
