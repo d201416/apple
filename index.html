@@ -125,6 +125,11 @@
     <h1>사과 신청받아요</h1>
     <p>5kg·10kg 상자 단위로 받고, 입금 확인되면 보내드려요.</p>
   </div>
+  <section class="card done" id="closed" hidden>
+    <img id="closedImg" width="120" height="120" alt="" style="border-radius:50%;display:block;margin:0 auto">
+    <h2>이번 주문은 마감됐어요</h2>
+    <p class="after" id="closedMsg" style="white-space:pre-line;word-break:keep-all"></p>
+  </section>
   <form class="card" id="orderForm" novalidate>
     <p class="err" id="loadErr" hidden style="margin:0 0 16px">주문 정보를 불러오지 못했어요. 잠시 후 새로고침해 주세요.</p>
 
@@ -261,12 +266,14 @@ function renderSizes(){
 }
 const method = () => { const r = document.querySelector('input[name=method]:checked'); return direct && r ? r.value : '택배'; };
 
-const DEFAULT_CFG = {"ok":true,"products":[{"variety":"감홍","options":[{"size":"5kg","price":65000},{"size":"10kg","price":130000}]}],"shipNormal":5000,"shipJeju":10000,"shipPerBox":true,"contact":"황지연 010-3525-6199"};
+const DEFAULT_CFG = {"ok":true,"open":true,"products":[{"variety":"감홍","options":[{"size":"5kg","price":65000},{"size":"10kg","price":130000}]}],"shipNormal":5000,"shipJeju":10000,"shipPerBox":true,"contact":"황지연 010-3525-6199"};
 const CFG_KEY = 'apple_cfg_v1';
 
 // 품종·가격을 화면에 그리기 (고른 품종·무게는 유지)
 function applyConfig(c){
   cfg = c;
+  $('closedMsg').textContent = cfg.closedMessage || '이번 사과 주문은 마감됐어요. 많이 신청해 주셔서 감사합니다 🍎';
+  showState();
   const box = $('varieties');
   if (!cfg.products.length) {
     box.innerHTML = '<p class="note">지금은 신청받는 사과가 없어요.</p>';
@@ -396,7 +403,10 @@ $('orderForm').addEventListener('submit', async e => {
   try {
     const res = await fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(data) });
     const j = await res.json();
-    if (!j.ok) throw new Error(j.error);
+    if (!j.ok) {
+      if (j.closed) { applyConfig(Object.assign({}, cfg, { open: false, closedMessage: j.message || '' })); window.scrollTo({ top: 0 }); return; }
+      throw new Error(j.error);
+    }
     $('dNo').textContent = j.no;
     $('dTotal').textContent = won(j.total);
     $('dAfter').textContent = j.method === '직배송'
@@ -431,13 +441,19 @@ function orderRows(o){
   ].filter(Boolean);
   return `<dl class="detail">${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>`;
 }
+function showState(){
+  const isCheck = location.hash.indexOf('#check') === 0;
+  const closed = !!(cfg && cfg.open === false) && !doneShown;
+  $('check').hidden = !isCheck;
+  $('orderForm').hidden = isCheck || doneShown || closed;
+  $('done').hidden = isCheck || !doneShown;
+  $('closed').hidden = isCheck || !closed;
+  const intro = document.querySelector('.intro'); if (intro) intro.hidden = isCheck || closed;
+}
 function route(){
   const h = location.hash;
   const isCheck = h.indexOf('#check') === 0;
-  $('check').hidden = !isCheck;
-  $('orderForm').hidden = isCheck || doneShown;
-  $('done').hidden = isCheck || !doneShown;
-  const intro = document.querySelector('.intro'); if (intro) intro.hidden = isCheck;
+  showState();
   if (isCheck) {
     const m = h.match(/^#check=(.+)$/);
     if (m) $('qNo').value = decodeURIComponent(m[1]);
@@ -472,6 +488,7 @@ document.addEventListener('click', e => {
   navigator.clipboard.writeText(b.dataset.copy).then(() => { b.textContent = '복사됨'; }).catch(() => { b.textContent = b.dataset.copy; });
 });
 
+$('closedImg').src = $('done').querySelector('img').src;
 loadConfig();
 route();
 </script>
