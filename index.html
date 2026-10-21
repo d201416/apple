@@ -163,11 +163,6 @@
       <input type="text" id="detail" placeholder="상세주소 (동·호수)" style="margin-top:8px">
     </div>
 
-    <div class="field" id="methodField" hidden>
-      <span class="l">받는 방법</span>
-      <div id="methodBox"></div>
-    </div>
-
     <div class="field">
       <label class="l" for="qty">수량 <span class="hint">상자 단위</span></label>
       <div class="stepper">
@@ -227,7 +222,7 @@
 
   <section class="info" aria-labelledby="infoTitle">
     <h2 id="infoTitle">배송·문의 안내</h2>
-    <p>택배는 로젠택배로 보내드리고, 가까운 지역은 직접 가져다드려요. 택배비는 상자당 5,000원, 제주는 10,000원이에요.</p>
+    <p>택배는 로젠택배로 보내드려요. 택배비는 상자당 5,000원, 제주는 10,000원이에요.</p>
     <p>상자가 파손됐거나 사과가 상해서 왔다면 버리지 말고 상자와 사과 사진을 찍어 받은 날 바로 연락 주세요. 로젠택배 사고 보상 절차로 처리해 드릴게요.</p>
     <p>문의 <a id="contactLink" href="#">010-3525-6199</a></p>
     <p class="acct"><span>입금 계좌</span><b>국민은행 468401-04-092143</b><span class="holder">예금주 황지연</span><button type="button" class="mini" data-copy="46840104092143">복사</button></p>
@@ -306,31 +301,6 @@ async function loadConfig(){
     try { localStorage.setItem(CFG_KEY, JSON.stringify(j)); } catch (e) {}
   } catch (e) { /* 서버가 늦거나 실패해도 기본값으로 진행. 금액은 제출 시 서버가 다시 계산 */ }
 }
-function renderMethod(){
-  $('methodField').hidden = false;
-  const box = $('methodBox');
-  if (checking) { box.innerHTML = '<p class="note">받는 방법 확인 중…</p>'; return; }
-  if (direct) {
-    box.innerHTML = `<div class="stack">
-      <label class="choice"><input type="radio" name="method" value="직배송" checked><span><b>직접 받기</b><em>배송비 없음</em></span></label>
-      <label class="choice"><input type="radio" name="method" value="택배"><span><b>로젠택배</b><em>상자당 ${won(cfg.shipNormal)}</em></span></label>
-    </div><p class="note">가까운 곳이라 직접 가져다드릴 수 있어요.</p>`;
-    box.querySelectorAll('input').forEach(i => i.addEventListener('change', update));
-  } else {
-    box.innerHTML = `<p class="note" style="margin:0">로젠택배로 보내드려요.</p>`;
-  }
-}
-
-async function checkDirect(){
-  direct = false; checking = true; renderMethod(); update();
-  try {
-    const url = SCRIPT_URL + '?action=quote&address=' + encodeURIComponent($('address').value) + '&zip=' + $('zip').value;
-    const j = await (await fetch(url)).json();
-    direct = !!(j.ok && j.direct);
-  } catch (e) { direct = false; }
-  checking = false; renderMethod(); update();
-}
-
 function update(){
   if (!cfg) return;
   const v = variety(), o = option(), q = qty(), m = method(), zip = $('zip').value;
@@ -359,7 +329,7 @@ $('findAddr').addEventListener('click', () => {
       $('address').value = data.roadAddress || data.jibunAddress;
       closeAddr();
       $('detail').focus();
-      checkDirect();
+      update();
     }
   }).embed($('addrWrap'), { autoClose: false });
 });
