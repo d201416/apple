@@ -125,8 +125,7 @@
   <div class="intro">
     <span class="tag">🍎 사과향기</span>
     <h1>사과 신청받아요</h1>
-    <p>입금 확인 후 <b>11월 9일(월)부터</b> 차례로 발송해요.</p>
-  </div>
+      </div>
   <section class="card done" id="closed" hidden>
     <div class="badge" aria-hidden="true"></div>
     <h2>이번 주문은 마감됐어요</h2>
@@ -141,7 +140,7 @@
     </div>
 
     <div class="field" id="sizeField" hidden>
-      <span class="l">무게</span>
+      <span class="l">규격</span>
       <div class="stack" id="sizes"></div>
     </div>
 
@@ -224,8 +223,8 @@
 
   <section class="info" aria-labelledby="infoTitle">
     <h2 id="infoTitle">배송·문의 안내</h2>
-    <p>택배는 로젠택배로 <b>11월 9일(월)부터</b> 차례로 발송해요. 부사 가격에는 택배비가 포함돼 있고, 제주는 상자당 5,000원이 추가돼요.</p>
-    <p>상자가 파손됐거나 사과가 상해서 왔다면 버리지 말고 상자와 사과 사진을 찍어 받은 날 바로 연락 주세요. 로젠택배 사고 보상 절차로 처리해 드릴게요.</p>
+    <p>택배는 로젠택배로 <b>11월 9일(월)부터</b> 차례로 발송해요. 택배비는 가격에 포함돼 있고, 제주는 상자당 5,000원이 추가돼요.</p>
+    <p>상자가 파손됐거나 상품이 상해서 왔다면 버리지 말고 상자와 상품 사진을 찍어 받은 날 바로 연락 주세요. 로젠택배 사고 보상 절차로 처리해 드릴게요.</p>
     <p>문의 <a id="contactLink" href="#">010-3525-6199</a></p>
     <p class="acct"><span>입금 계좌</span><b>국민은행 468401-04-092143</b><span class="holder">예금주 황지연</span><button type="button" class="mini" data-copy="46840104092143">복사</button></p>
     <a class="btn-secondary" href="#check">주문 내역 확인하기</a>
@@ -263,7 +262,7 @@ function renderSizes(){
 }
 const method = () => { const r = document.querySelector('input[name=method]:checked'); return direct && r ? r.value : '택배'; };
 
-const DEFAULT_CFG = {"ok":true,"open":true,"products":[{"variety":"부사","shipIncluded":true,"options":[{"size":"10kg","price":70000}]}],"shipNormal":5000,"shipJeju":10000,"shipPerBox":true,"contact":"황지연 010-3525-6199"};
+const DEFAULT_CFG = {"ok":true,"open":true,"products":[{"variety":"부사","shipIncluded":true,"options":[{"size":"10kg","price":70000}]},{"variety":"사과즙","shipIncluded":true,"options":[{"size":"130ml 100포","price":60000}]}],"shipNormal":5000,"shipJeju":10000,"shipPerBox":true,"contact":"황지연 010-3525-6199"};
 const CFG_KEY = 'apple_cfg_v2';
 
 // 품종·가격을 화면에 그리기 (고른 품종·무게는 유지)
@@ -405,9 +404,9 @@ function orderRows(o){
     ['주문번호', o.no],
     o.status ? ['상태', o.status] : null,
     ['상품', `${o.variety} ${o.size} × ${o.qty}상자`],
-    ['사과 금액', won(o.appleTotal)],
+    ['상품 금액', won(o.appleTotal)],
     ['배송', o.method === '직배송' ? '직접 배송 (0원)' : `로젠택배${o.region === '제주' ? ' (제주)' : ''} ${o.ship ? won(o.ship) : '(택배비 포함)'}`],
-    o.variety === '부사' ? ['발송 예정', '11월 9일(월)부터 차례로'] : null,
+    o.variety === '부사' && o.status !== '배송 완료' ? ['발송 예정', '11월 9일(월)부터 차례로'] : null,
     ['입금하실 금액', won(o.total)],
     ['입금자명', o.orderer],
     ['받는 분', `${o.name} · ${o.phone}`],
