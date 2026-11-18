@@ -7,12 +7,12 @@
 <!-- 링크 미리보기 (카톡 등) — 배포 주소로 바꿔줘. 이미지는 반드시 https 전체 주소 -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="사과 신청하기">
-<meta property="og:description" content="부사 10kg 상자, 택배비 포함 70,000원. 입금 확인 후 11월 9일(월)부터 발송해요.">
+<meta property="og:description" content="부사 10kg 70,000원 · 사과즙 130ml 100포 60,000원, 택배비 포함.">
 <meta property="og:url" content="https://d201416.github.io/apple/">
 <meta property="og:image" content="https://d201416.github.io/apple/og-image.jpg?v=autumn">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta name="description" content="부사 10kg 상자, 택배비 포함 70,000원. 입금 확인 후 11월 9일(월)부터 발송해요.">
+<meta name="description" content="부사 10kg 70,000원 · 사과즙 130ml 100포 60,000원, 택배비 포함.">
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#F4B860">
 <meta name="format-detection" content="telephone=no, address=no, email=no">
@@ -223,7 +223,7 @@
 
   <section class="info" aria-labelledby="infoTitle">
     <h2 id="infoTitle">배송·문의 안내</h2>
-    <p>택배는 로젠택배로 <b>11월 9일(월)부터</b> 차례로 발송해요. 택배비는 가격에 포함돼 있고, 제주는 상자당 5,000원이 추가돼요.</p>
+    <p>택배는 로젠택배로 발송해요. 택배비는 가격에 포함돼 있고, 제주는 상자당 5,000원이 추가돼요.</p>
     <p>상자가 파손됐거나 상품이 상해서 왔다면 버리지 말고 상자와 상품 사진을 찍어 받은 날 바로 연락 주세요. 로젠택배 사고 보상 절차로 처리해 드릴게요.</p>
     <p>문의 <a id="contactLink" href="#">010-3525-6199</a></p>
     <p class="acct"><span>입금 계좌</span><b>국민은행 468401-04-092143</b><span class="holder">예금주 황지연</span><button type="button" class="mini" data-copy="46840104092143">복사</button></p>
@@ -383,7 +383,7 @@ $('orderForm').addEventListener('submit', async e => {
     $('dTotal').textContent = won(j.total);
     $('dAfter').textContent = j.method === '직배송'
       ? '입금 확인되면 직접 가져다드릴게요. 감사합니다.'
-      : '입금 확인 후 11월 9일(월)부터 로젠택배로 보내드릴게요. 감사합니다.';
+      : '입금 확인 후 로젠택배로 보내드릴게요. 감사합니다.';
     $('dDetail').innerHTML = orderRows(Object.assign({}, j, {
       orderer: data.orderer || data.name, name: data.name, phone: data.phone,
       address: (data.address + ' ' + data.detail).trim(),
@@ -406,7 +406,6 @@ function orderRows(o){
     ['상품', `${o.variety} ${o.size} × ${o.qty}상자`],
     ['상품 금액', won(o.appleTotal)],
     ['배송', o.method === '직배송' ? '직접 배송 (0원)' : `로젠택배${o.region === '제주' ? ' (제주)' : ''} ${o.ship ? won(o.ship) : '(택배비 포함)'}`],
-    o.variety === '부사' && o.status !== '배송 완료' ? ['발송 예정', '11월 9일(월)부터 차례로'] : null,
     ['입금하실 금액', won(o.total)],
     ['입금자명', o.orderer],
     ['받는 분', `${o.name} · ${o.phone}`],
